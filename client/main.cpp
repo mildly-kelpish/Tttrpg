@@ -7,30 +7,19 @@
 
 using namespace std;
 using namespace rang;
+using json = nlohmann::json;
 
 
 int main() {
     cout << rang::fg::cyan << "HTTRPG official client v1.0" << rang::style::reset << std::endl;
-    toml::table config;
-    std::optional<std::string> serveradress;
-    std::optional<std::string> playerkey;
-    std::optional<std::long> playertype;
-    try {
-        config = toml::parse_file("config.toml");
-        serveradress = config["SERVER"].value<std::string>();
-        playerkey = config["PLAYERKEY"].value<std::string>();
-        playertype = config["PLAYERTYPE"].value<std::long>();
-        cout << rang::fg::yellow << "loaded configuration file" << rang::style::reset << std::endl;
-    }
-    catch (const toml::parse_error& err) {
-        cerr << rang::fg::red << "ERROR: parsing failed!:\n" << err << "\n" << rang::style::reset << std::endl;
-        return 1;
-    }
-    httplib::Client cli(*serveradress);
-    cout << "connecting to server..." << std::endl; // why printf when cout << "string" << std::endl; !
-    nlohman::json authentication == {{"typ"}}
-    auto res = cli.Post("/authenticate", );
-    if (res && res-> status == 200) {
+    const toml::value config = toml::parse("config.toml");
+    cout << "loaded config" << std::endl;
+    httplib::Client cli(config.at("SERVER").as_string());
+    cout << "connecting to server..." << std::endl; // why printf when cout << "string" << std::endl; 
+    nlohmann::json authentication = {{"key", config.at("PLAYERKEY").as_string()}, {"typ", config.at("PLAYERTYPE").as_integer()}};
+    cout << authentication.dump() << std::endl;
+    auto res = cli.Post("/authenticate", authentication.dump(), "application/json");
+    if (res) {
         cout << "loading complete!" << std::endl;
         cout << res->body << std::endl;
     }
